@@ -24,36 +24,41 @@ class BrandResource extends Resource
     {
         return $form
             ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\FileUpload::make('logo')
-                        ->image()
-                        ->directory('brands')
-                        ->maxSize(1024)
-                        ->required(),
-                ]);
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->unique(
+                        table: Brand::class,
+                        column: 'name',
+                        ignoreRecord: true
+                    )
+                    ->maxLength(255),
+                Forms\Components\FileUpload::make('logo')
+                    ->image()
+                    ->directory('brands')
+                    ->maxSize(1024)
+                    ->required(),
+            ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                    Tables\Columns\TextColumn::make('name')->searchable(),
-                    Tables\Columns\ImageColumn::make('logo')->circular(),
-                ])
+                Tables\Columns\TextColumn::make('name')->searchable(),
+                Tables\Columns\ImageColumn::make('logo')->square(),
+            ])
             ->filters([
-                    //
-                ])
+                //
+            ])
             ->actions([
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
-                ])
+                Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
+            ])
             ->bulkActions([
-                    Tables\Actions\BulkActionGroup::make([
-                        Tables\Actions\DeleteBulkAction::make(),
-                    ]),
-                ]);
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
     }
 
     public static function getRelations(): array

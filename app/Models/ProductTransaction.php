@@ -17,7 +17,7 @@ class ProductTransaction extends Model
         'booking_trx_id',
         'city',
         'address',
-        'postal_code',
+        'post_code',
         'quantity',
         'sub_total_amount',
         'grand_total_amount',

@@ -13,9 +13,12 @@ use Filament\Resources\Components\Tab;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Factories\Relationship;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+use function Symfony\Component\String\s;
 
 class ProdukResource extends Resource
 {
@@ -65,6 +68,7 @@ class ProdukResource extends Resource
 
                                 Forms\Components\Repeater::make('photos')
                                     ->label('Photos')
+                                    ->relationship()
                                     ->schema([
                                         Forms\Components\FileUpload::make('photo')
                                             ->image()
@@ -77,18 +81,12 @@ class ProdukResource extends Resource
                             ]),
 
                         Forms\Components\Repeater::make('Sizes')
+                            ->relationship()
                             ->schema([
-                                // bug null data
-                                TagsInput::make('size')
-                                    ->required()
-                                    ->label('Ukuran Produk')
-                                    ->suggestions([
-                                        'S',
-                                        'M',
-                                        'L',
-                                        'XL',
-                                        'XXL'
-                                    ])
+                                // ukuran produk
+                                Forms\Components\TextInput::make('size')
+                                    ->label('Ukuran')
+                                    ->required(),
                             ])
                             ->addActionLabel('Tambah ukuran produk lainnya'),
                     ])
@@ -167,7 +165,7 @@ class ProdukResource extends Resource
                 Tables\Columns\TextColumn::make('brand.name')
                     ->sortable()
                     ->label('Merek'),
-                
+
                 Tables\Columns\TextColumn::make('stock')
                     ->sortable()
                     ->suffix(' pcs')
@@ -186,8 +184,10 @@ class ProdukResource extends Resource
                     ->relationship('brand', 'name'),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
