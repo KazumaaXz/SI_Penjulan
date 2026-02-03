@@ -39,8 +39,13 @@ class ProdukResource extends Resource
                             ->schema([
 
                                 Forms\Components\TextInput::make('name')
-                                    ->label('Name')
+                                    ->label('Nama Produk')
                                     ->required()
+                                    ->unique(
+                                        table: Produk::class,
+                                        column: 'name',
+                                        ignoreRecord: true
+                                    )
                                     ->live(true)
                                     ->afterStateUpdated(
                                         fn($state, callable $set) =>
@@ -177,6 +182,7 @@ class ProdukResource extends Resource
                     ->boolean(),
             ])
             ->filters([
+                Tables\Filters\TrashedFilter::make()->label('Sampah'),
                 Tables\Filters\SelectFilter::make('category')
                     ->relationship('category', 'name'),
 
@@ -192,6 +198,9 @@ class ProdukResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Soft Deletes Restore & delete (permanent)
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -210,5 +219,14 @@ class ProdukResource extends Resource
             'create' => Pages\CreateProduk::route('/create'),
             'edit' => Pages\EditProduk::route('/{record}/edit'),
         ];
+    }
+
+    // Soft delete functionality
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

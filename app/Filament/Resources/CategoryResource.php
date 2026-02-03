@@ -24,13 +24,18 @@ class CategoryResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Category')
                     ->required()
-                    ->unique(
-                        table: Category::class,
-                        column: 'name',
-                        ignoreRecord: true
-                    )
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true)
+                    ->rules([
+                        'min:5',
+                        'max:20'
+                    ])
+                    ->validationMessages([
+                        'unique' => 'Nama category sudah digunakan',
+                        'min' => 'Nama category terlalu pendek (min 5 karakter)',
+                        'max' => 'Nama category terlalu panjang (max 20 karakter)'
+                    ]),
                 Forms\Components\FileUpload::make('icon')
                     ->image()
                     ->directory('categories')
@@ -48,7 +53,7 @@ class CategoryResource extends Resource
                 Tables\Columns\ImageColumn::make('icon')->circular(),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make()->label('Sampah'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -57,6 +62,9 @@ class CategoryResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Soft Deletes Restore & delete (permanent)
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -75,5 +83,14 @@ class CategoryResource extends Resource
             'create' => Pages\CreateCategory::route('/create'),
             'edit' => Pages\EditCategory::route('/{record}/edit'),
         ];
+    }
+
+    // Soft delete functionality
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

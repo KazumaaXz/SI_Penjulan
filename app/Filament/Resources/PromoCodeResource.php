@@ -29,13 +29,28 @@ class PromoCodeResource extends Resource
                             ->label('Promo Code')
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->maxLength(255),
+                            ->rules([
+                                'min:8',
+                                'max:20'
+                            ])
+                            ->validationMessages([
+                                'unique' => 'Kode promo sudah digunakan',
+                                'min' => 'Nama terlalu pendek (min 8 karakter)',
+                                'max' => 'Nama terlalu panjang (max 20 karakter)'
+                            ]),
 
                         Forms\Components\TextInput::make('discount_amount')
                             ->label('Discount Amount')
-                            ->numeric()
                             ->required()
-                            ->prefix('IDR '),
+                            ->prefix('IDR ')
+                            ->rules([
+                                'numeric',
+                                'min:10000'
+                            ])
+                            ->validationMessages([
+                                'numeric' => 'Discount amount hanya bisa diisi oleh angka',
+                                'min' => 'Nominal terlalu kecil (min Rp.10.000)'
+                            ]),
                     ]),
             ]);
     }
@@ -62,7 +77,7 @@ class PromoCodeResource extends Resource
             ->defaultSort('created_at', 'desc') 
             ->searchable()
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make()->label('Sampah'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -71,6 +86,9 @@ class PromoCodeResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Soft Deletes Restore & delete (permanent)
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -89,5 +107,14 @@ class PromoCodeResource extends Resource
             'create' => Pages\CreatePromoCode::route('/create'),
             'edit' => Pages\EditPromoCode::route('/{record}/edit'),
         ];
+    }
+    
+    // Soft delete functionality
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

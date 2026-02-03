@@ -25,13 +25,18 @@ class BrandResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nama Brand')
                     ->required()
-                    ->unique(
-                        table: Brand::class,
-                        column: 'name',
-                        ignoreRecord: true
-                    )
-                    ->maxLength(255),
+                    ->unique(ignoreRecord: true)
+                    ->rules([
+                        'min:5',
+                        'max:35'
+                    ])
+                    ->validationMessages([
+                        'unique' => 'Nama brand sudah digunakan',
+                        'min' => 'Nama brand terlalu pendek (min 5 karakter)',
+                        'max' => 'Nama brand terlalu panjang (max 40 karakter)'
+                    ]),
                 Forms\Components\FileUpload::make('logo')
                     ->image()
                     ->directory('brands')
@@ -48,7 +53,7 @@ class BrandResource extends Resource
                 Tables\Columns\ImageColumn::make('logo')->square(),
             ])
             ->filters([
-                //
+                Tables\Filters\TrashedFilter::make()->label('Sampah'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -57,6 +62,9 @@ class BrandResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Soft Deletes Restore & delete (permanent)
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -75,5 +83,14 @@ class BrandResource extends Resource
             'create' => Pages\CreateBrand::route('/create'),
             'edit' => Pages\EditBrand::route('/{record}/edit'),
         ];
+    }
+
+    // Soft delete functionality
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }

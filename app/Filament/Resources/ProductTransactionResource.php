@@ -11,7 +11,9 @@ use Filament\Resources\Resource;
 use App\Models\Produk;
 use App\Models\PromoCode;
 use Filament\Tables;
+use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ProductTransactionResource extends Resource
 {
@@ -242,6 +244,10 @@ class ProductTransactionResource extends Resource
                     ->openUrlInNewTab(),
 
             ])
+            ->filters([
+                Tables\Filters\TrashedFilter::make()->label('Sampah'),
+
+            ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
@@ -251,6 +257,9 @@ class ProductTransactionResource extends Resource
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
+                    // Soft Deletes Restore & delete (permanent)
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
                 ]),
             ]);
     }
@@ -262,5 +271,14 @@ class ProductTransactionResource extends Resource
             'create' => Pages\CreateProductTransaction::route('/create'),
             'edit' => Pages\EditProductTransaction::route('/{record}/edit'),
         ];
+    }
+
+    // Soft delete functionality
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ]);
     }
 }
